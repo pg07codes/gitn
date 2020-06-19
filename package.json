@@ -1,0 +1,23 @@
+{
+  "name": "gitn",
+  "version": "1.0.0",
+  "description": "- gitn is nothing but git + notes ( a note taking app)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pg07codes/gitn.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pg07codes/gitn/issues"
+  },
+  "homepage": "https://github.com/pg07codes/gitn#readme",
+  "dependencies": {
+    "chalk": "^4.1.0"
+  }
+}
