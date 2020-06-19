@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/pg07codes/gitn#readme",
   "dependencies": {
-    "chalk": "^4.1.0"
+    "chalk": "^4.1.0",
+    "commander": "^5.1.0"
   }
 }
