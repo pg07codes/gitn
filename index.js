@@ -5,17 +5,52 @@ program.version('0.0.1');
 
 // ---------config store code
 const Configstore = require('configstore');
-const cfg = new Configstore("gitn", { init: false });
+const cfg = new Configstore("gitn");
 let NOTE_DIR = cfg.get('NOTE_DIR');
 let CURRENT_BRANCH = cfg.get('CURRENT_BRANCH');
 
-
 // ----config store code
+program
+  .command('config')
+  .option('-g , --globaldir <directory>','edit global notes directory file')
+  .description('view/edit global config file')
+  .action(async (args) => {
+    if(args.globaldir){
+      cfg.set('NOTE_DIR',args.globaldir);
+      cfg.set('INIT',true);
+      cfg.set('CURRENT_BRANCH','master');
+
+      let filehandle;
+      try {
+        await fs.mkdir(`${cfg.get('NOTE_DIR')}`, { recursive: true });
+        filehandle = await fs.open(`${NOTE_DIR}${cfg.get('CURRENT_BRANCH')}.txt`, 'wx'); // wx fails if exist, so may use w 
+        
+      } catch (e) {
+        if (e.code == 'EEXIST') {
+          console.log('global directory already exists here. using it now.')
+        } else if (e.code=='ENOENT') {
+          
+          console.log('invalid path provided')
+        }else{
+          console.log(e)
+        }
+      } finally {
+        if (filehandle !== undefined)
+          await filehandle.close();
+      }
+      // switch branch and all accordingly ...eg. make a master.txt as default
+    }else{
+      // show contents of config as well 
+      console.log(cfg.path)
+    }
+  })
+
+
 program
   .command('status ')
   .description('outputs current branch')
   .action(() => {
-    console.log(`you are on ${CURRENT_BRANCH}`);
+    console.log(`you are on ${cfg.get('CURRENT_BRANCH')}`);
   })
 
 program
@@ -85,7 +120,7 @@ program
 program
   .command('checkout <branch>')
   .description('switch to different branch')
-  .action((branch) => {
+  .action((branch) => {             // checkout only branch that exists condn handle to be done
     cfg.set('CURRENT_BRANCH', `${branch}`)
   })
 
