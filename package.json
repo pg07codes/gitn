@@ -1,8 +1,10 @@
 {
   "name": "gitn",
-  "version": "1.0.0",
-  "description": "- gitn is nothing but git + notes ( a note taking app)",
-  "main": "index.js",
+  "version": "0.0.1",
+  "description": "gitn is an cmdline app for notes (git + notes)",
+  "main": "index.js", 
+  "preferGlobal": true,
+  "bin": { "gitn": "index.js" },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,9 +12,13 @@
     "type": "git",
     "url": "git+https://github.com/pg07codes/gitn.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "notes",
+    "git",
+    "command line"
+  ],
+  "author": "Pranav Gupta <pg07codes@gmail.com> (pg07codes.github.io)",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/pg07codes/gitn/issues"
   },

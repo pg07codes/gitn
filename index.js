@@ -1,37 +1,41 @@
+#!/usr/bin/env node
+
 const { program } = require('commander');
 const fs = require("fs").promises
-program.version('0.0.1');
-
-
-// ---------config store code
 const Configstore = require('configstore');
-const cfg = new Configstore("gitn");
+const chalk = require('chalk');
+
+const cfg = new Configstore("gitn", { 'INIT': false });
+
+let INIT = cfg.get('INIT');
 let NOTE_DIR = cfg.get('NOTE_DIR');
 let CURRENT_BRANCH = cfg.get('CURRENT_BRANCH');
 
-// ----config store code
+
+program.version('0.0.1');
+
 program
   .command('config')
-  .option('-g , --globaldir <directory>','edit global notes directory file')
+  .option('-g , --globaldir <directory>', 'edit global notes directory file')
   .description('view/edit global config file')
   .action(async (args) => {
-    if(args.globaldir){
-      cfg.set('NOTE_DIR',args.globaldir);
-      cfg.set('INIT',true);
-      cfg.set('CURRENT_BRANCH','master');
+    if (args.globaldir) {
+      cfg.set('INIT', true);
+      cfg.set('NOTE_DIR', args.globaldir);
+      cfg.set('CURRENT_BRANCH', 'master');
 
       let filehandle;
       try {
         await fs.mkdir(`${cfg.get('NOTE_DIR')}`, { recursive: true });
         filehandle = await fs.open(`${NOTE_DIR}${cfg.get('CURRENT_BRANCH')}.txt`, 'wx'); // wx fails if exist, so may use w 
-        
+
       } catch (e) {
         if (e.code == 'EEXIST') {
-          console.log('global directory already exists here. using it now.')
-        } else if (e.code=='ENOENT') {
-          
-          console.log('invalid path provided')
-        }else{
+          console.log(chalk.red('global directory already exists here. using it now.'))
+        } else if (e.code == 'ENOENT') {
+
+          console.log(chalk.red('invalid path provided'))
+        } else {
           console.log(e)
         }
       } finally {
@@ -39,9 +43,9 @@ program
           await filehandle.close();
       }
       // switch branch and all accordingly ...eg. make a master.txt as default
-    }else{
+    } else {
       // show contents of config as well 
-      console.log(cfg.path)
+      console.log(chalk.blue(cfg.path))
     }
   })
 
@@ -50,7 +54,7 @@ program
   .command('status ')
   .description('outputs current branch')
   .action(() => {
-    console.log(`you are on ${cfg.get('CURRENT_BRANCH')}`);
+    console.log(`you are on ${chalk.blue(cfg.get('CURRENT_BRANCH'))}`);
   })
 
 program
@@ -61,7 +65,8 @@ program
     try {
       filehandle = await fs.open(`${NOTE_DIR}${CURRENT_BRANCH}.txt`, 'r');
       data = await filehandle.readFile('utf-8');
-      console.log(data)
+      console.log(chalk.green(`showing notes on branch ${CURRENT_BRANCH}`));
+      console.log(data);
     } finally {
       if (filehandle !== undefined)
         await filehandle.close();
@@ -87,16 +92,20 @@ program
 program
   .command('branch [newBranch]')
   .action(async (newBranch) => {
+    let files;
     let filehandle;
     if (!newBranch) {
       try {
-        filehandle = await fs.readdir(`${NOTE_DIR}`, 'utf-8');
-        filehandle.forEach(e => {
+        files = await fs.readdir(`${NOTE_DIR}`, 'utf-8');
+        files.forEach(e => {
           e = e.split('.')[0] // only file(branch) name
-          console.log(e);
+          if (e === CURRENT_BRANCH)
+            console.log(`${e}${chalk.bold.green('*')}`);
+          else
+            console.log(e)
         })
       } catch (e) {
-        console.log('some error occured:', e)
+        console.log(chalk.red('some error occured:'), e)
       }
     } else {
       try {
@@ -104,7 +113,7 @@ program
         // console.log(filehandle)
       } catch (e) {
         if (e.code == 'EEXIST') {
-          console.log('branch already exists')
+          console.log(chalk.red('branch already exists'))
         } else {
           console.log(e)
         }
@@ -120,8 +129,25 @@ program
 program
   .command('checkout <branch>')
   .description('switch to different branch')
-  .action((branch) => {             // checkout only branch that exists condn handle to be done
-    cfg.set('CURRENT_BRANCH', `${branch}`)
+  .action(async (branch) => {             // checkout only branch that exists condn handle to be done
+    let files;
+    try {
+      files = await fs.readdir(`${NOTE_DIR}`, 'utf-8');
+      let changed=false;
+      files.forEach(e => {
+        e = e.split('.')[0] // only file(branch) name
+        if (e === branch){
+          changed=true;
+          cfg.set('CURRENT_BRANCH', `${branch}`)
+        }
+      })
+      if(!changed){
+        throw new Error('no such branch exists.');
+      }
+    } catch (e) {
+      console.log(chalk.red(e.message));
+    }
+
   })
 
 program
@@ -139,9 +165,9 @@ program
       await fs.unlink(`${NOTE_DIR}${branch}.txt`);
     } catch (e) {
       if (e.errno === -2) {
-        console.log('no such branch');
+        console.log(chalk.red('no such branch'));
       } else if (e.errno === 8989) {
-        console.log(e.msg);
+        console.log(chalk.red(e.msg));
       } else
         console.log(e);
     } finally {
