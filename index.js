@@ -4,8 +4,8 @@ const { program } = require('commander');
 const fs = require("fs").promises
 const Configstore = require('configstore');
 const chalk = require('chalk');
-const path = require('path')
-
+const path = require('path');
+const inquirer = require('inquirer');
 const cfg = new Configstore("gitn", { 'INIT': false });
 
 let INIT = cfg.get('INIT');
@@ -205,6 +205,51 @@ program
         await filehandle.close();
       if (currentFilehandle !== undefined)
         await currentFilehandle.close();
+    }
+
+  })
+
+program
+  .command('rebase')
+  .description('delete notes on branch')
+  .action(async () => {
+    let filehandle;
+    try {
+      filehandle = await fs.open(`${NOTE_DIR}${CURRENT_BRANCH}.txt`, "r+");
+      data = await filehandle.readFile('utf-8');
+      if (filehandle !== undefined)
+        await filehandle.close();
+      console.log(chalk.green(`On branch ${chalk.bold.blue(CURRENT_BRANCH)}`));
+      notes = data.split('\n');
+      notes.pop();
+      let choices = [];
+      choices = notes.map(i => { return { name: i } });
+      let resp = await inquirer
+        .prompt([
+          {
+            type: 'checkbox',
+            message: 'Select Notes to Delete',
+            name: 'delete',
+            choices,
+          }
+        ])
+
+      if (resp.delete.length !== 0) {
+
+        notes = notes.filter(n => {
+          return !resp.delete.includes(n)
+        })
+        let updatedNotes = notes.reduce((acc, curr) => {
+          acc = acc + curr + "\n";
+          return acc;
+        }, "")
+      
+        await fs.writeFile(`${NOTE_DIR}${CURRENT_BRANCH}.txt`,updatedNotes)
+        console.log(`saved`)
+      }
+
+    } catch (e) {
+      console.log(e)
     }
 
   })
