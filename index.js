@@ -99,11 +99,24 @@ program
 
 
 program
-  .command('branch [newBranch]')
-  .action(async (newBranch) => {
+  .command('branch [branch]')
+  .option('-d --delete ', 'delete a branch')
+  .action(async (branch) => {
     let files;
     let filehandle;
-    if (!newBranch) {
+    if (program.args.includes('-d') || program.args.includes('--delete')) {
+      try {
+        if (!branch) throw new Error(" option '-d --delete' requires <branch> to be specified");
+        if (CURRENT_BRANCH == branch) throw new Error("On same branch. Switch to another branch.");
+        await fs.unlink(`${NOTE_DIR}${branch}.txt`);
+      } catch (e) {
+        if(e.errno === -2){
+          console.log(chalk.red(`branch '${chalk.bold(branch)}' does not exist.`));
+        }else
+          console.log(chalk.red(e.message));
+      }
+    }
+    else if (!branch) {
       try {
         files = await fs.readdir(`${NOTE_DIR}`, 'utf-8');
         files.forEach(e => {
@@ -118,7 +131,7 @@ program
       }
     } else {
       try {
-        filehandle = await fs.open(`${NOTE_DIR}${newBranch}.txt`, 'wx'); // wx fails if exist, so may use w 
+        filehandle = await fs.open(`${NOTE_DIR}${branch}.txt`, 'wx'); // wx fails if exist, so may use w 
         // console.log(filehandle)
       } catch (e) {
         if (e.code == 'EEXIST') {
@@ -137,7 +150,7 @@ program
 
 program
   .command('checkout <branch>')
-  .option('-b --createBranch')
+  .option('-b --newBranch', 'create a new branch')
   .description('create/switch branch')
   .action(async (branch) => {
     let filehandle;
@@ -145,7 +158,7 @@ program
       try {
         filehandle = await fs.open(`${NOTE_DIR}${branch}.txt`, 'wx'); // wx fails if exist, so may use w 
         cfg.set('CURRENT_BRANCH', `${branch}`)
-        console.log(chalk.green(`created and switched to branch ${chalk.bold.blue(branch)}`))
+        console.log(chalk.green(`created and switched to new branch ${chalk.bold.blue(branch)}`))
       } catch (e) {
         if (e.code == 'EEXIST') {
           cfg.set('CURRENT_BRANCH', `${branch}`)
@@ -243,8 +256,8 @@ program
           acc = acc + curr + "\n";
           return acc;
         }, "")
-      
-        await fs.writeFile(`${NOTE_DIR}${CURRENT_BRANCH}.txt`,updatedNotes)
+
+        await fs.writeFile(`${NOTE_DIR}${CURRENT_BRANCH}.txt`, updatedNotes)
         console.log(`saved`)
       }
 
