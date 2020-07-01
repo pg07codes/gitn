@@ -93,7 +93,7 @@ program
         })
       }
       notes.forEach(e => {
-        console.log(`---> ${e}`)
+        console.log(`${chalk.bold.blue('├─ ')}${e}`)
       })
     } finally {
       if (filehandle !== undefined)
@@ -104,11 +104,14 @@ program
 program
   .command('commit')
   .requiredOption('-m , --message <msg>', 'commit must have a mesage')
+  .description('add new note')
   .action(async (args) => {
     let filehandle;
     try {
       filehandle = await fs.open(`${NOTE_DIR}${CURRENT_BRANCH}.txt`, 'a', 666);
       await fs.appendFile(filehandle, args.message + '\n', 'utf-8');
+    } catch (e) {
+      console.log(e.message)
     } finally {
       if (filehandle !== undefined)
         await filehandle.close();
@@ -147,11 +150,11 @@ program
           data = await filehandle.readFile('utf-8');
           notes = data.split("\n");
           notes.pop();
-          notes.forEach(e=>{
-            branchNotesTree[files[i]][e]=null;
+          notes.forEach(e => {
+            branchNotesTree[files[i]][e] = null;
           })
         }
-        console.log(treeify.asTree(branchNotesTree,true));
+        console.log(treeify.asTree(branchNotesTree, true));
 
       } catch (e) {
         console.log(chalk.red(e.message));
@@ -160,12 +163,13 @@ program
     else if (!branch) {
       try {
         files = await fs.readdir(`${NOTE_DIR}`, 'utf-8');
+        console.log(`${chalk.green('showing ')}${chalk.bold.blue('all branches')}`)
         files.forEach(e => {
           e = e.split('.')[0] // only file(branch) name
           if (e === CURRENT_BRANCH)
-            console.log(`${e}${chalk.bold.green('*')}`);
+            console.log(`${chalk.bold.blue('├─ ')}${e}${chalk.bold.green('*')}`);
           else
-            console.log(e)
+            console.log(`${chalk.bold.blue('├─ ')}${e}`)
         })
       } catch (e) {
         console.log(chalk.red('some error occured:'), e)
@@ -188,6 +192,18 @@ program
 
   })
 
+program
+  .command('reset')
+  .description('deletes all commits on current branch')
+  .action(async (args) => {
+    try {
+      await fs.truncate(`${NOTE_DIR}${CURRENT_BRANCH}.txt`);
+      console.log(`${chalk.green('reset successful')}`)
+    } catch (e) {
+      console.log(e.message)
+    }
+
+  })
 
 program
   .command('checkout <branch>')
