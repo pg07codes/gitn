@@ -6,18 +6,19 @@ const Configstore = require('configstore');
 const chalk = require('chalk');
 const path = require('path');
 const inquirer = require('inquirer');
+let treeify = require('treeify');
 const cfg = new Configstore("gitn", { 'INIT': false });
 
 let INIT = cfg.get('INIT');
 let NOTE_DIR = cfg.get('NOTE_DIR');
 let CURRENT_BRANCH = cfg.get('CURRENT_BRANCH');
+let CONFIG = cfg.all;
 
-
-program.version('0.0.1');
+program.version('0.1.0');
 
 program
   .command('config')
-  .option('-g , --globaldir <directory>', 'edit global notes directory file')
+  .option('-g , --globaldir <directory>', 'set global notes directory path')
   .description('view/edit global config file')
   .action(async (args) => {
     if (args.globaldir) {
@@ -51,12 +52,18 @@ program
           await filehandle.close();
       }
     } else {
-      // show contents of config as well 
-      console.log(`${chalk.red('Do not change manually !! Stuff may start breaking')}`)
-      console.log(cfg.path)
-
+      console.log(`${chalk.red('Do not edit manually !! Things may start breaking\n')}`);
+      console.log(chalk.blue("use 'gitn config -g <absolute_path_to_notes_directory>' to change notes directory"))
     }
-  })
+  });
+
+(function isInitialised(CONFIG) {
+  if (Object.keys(CONFIG).length === 0) {
+    console.log(chalk.red.bold('notes directory not set !!\n'));
+    console.log(chalk.blue("use 'gitn config -g <absolute_path_to_notes_directory>' to initialise gitn"));
+    return;
+  }
+}(CONFIG));
 
 
 program
@@ -67,15 +74,27 @@ program
   })
 
 program
-  .command('log ')
+  .command('log')
+  .option('-g --grep <pattern>', 'find notes by searching string/pattern')
   .description('outputs notes on current branch')
-  .action(async () => {
+  .action(async (args) => {
     let filehandle;
     try {
       filehandle = await fs.open(`${NOTE_DIR}${CURRENT_BRANCH}.txt`, 'r');
       data = await filehandle.readFile('utf-8');
       console.log(chalk.green(`On branch ${chalk.bold.blue(CURRENT_BRANCH)}`));
-      console.log(data);
+      notes = data.split("\n");
+      notes.pop();
+      if (args.grep) {
+
+        let re = new RegExp(args.grep);
+        notes = notes.filter(e => {
+          return re.test(e)
+        })
+      }
+      notes.forEach(e => {
+        console.log(`---> ${e}`)
+      })
     } finally {
       if (filehandle !== undefined)
         await filehandle.close();
@@ -101,6 +120,7 @@ program
 program
   .command('branch [branch]')
   .option('-d --delete ', 'delete a branch')
+  .option('-a --all', 'show all branches with commits')
   .action(async (branch) => {
     let files;
     let filehandle;
@@ -110,10 +130,31 @@ program
         if (CURRENT_BRANCH == branch) throw new Error("On same branch. Switch to another branch.");
         await fs.unlink(`${NOTE_DIR}${branch}.txt`);
       } catch (e) {
-        if(e.errno === -2){
+        if (e.errno === -2) {
           console.log(chalk.red(`branch '${chalk.bold(branch)}' does not exist.`));
-        }else
+        } else
           console.log(chalk.red(e.message));
+      }
+    } else if (program.args.includes('-a') || program.args.includes('--all')) {
+      try {
+        if (branch) throw new Error(" option '-a --all' does not take any argument");
+        let branchNotesTree = {};
+        files = await fs.readdir(`${NOTE_DIR}`, 'utf-8');
+        for (let i = 0; i < files.length; i++) {
+          files[i] = files[i].split('.')[0]
+          branchNotesTree[files[i]] = {};
+          filehandle = await fs.open(`${NOTE_DIR}${files[i]}.txt`, 'r');
+          data = await filehandle.readFile('utf-8');
+          notes = data.split("\n");
+          notes.pop();
+          notes.forEach(e=>{
+            branchNotesTree[files[i]][e]=null;
+          })
+        }
+        console.log(treeify.asTree(branchNotesTree,true));
+
+      } catch (e) {
+        console.log(chalk.red(e.message));
       }
     }
     else if (!branch) {

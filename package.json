@@ -1,6 +1,6 @@
 {
   "name": "gitn",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "gitn is an cmdline app for notes (git + notes)",
   "main": "index.js",
   "preferGlobal": true,
@@ -29,6 +29,7 @@
     "chalk": "^4.1.0",
     "commander": "^5.1.0",
     "configstore": "^5.0.1",
-    "inquirer": "^7.2.0"
+    "inquirer": "^7.2.0",
+    "treeify": "^1.1.0"
   }
 }
