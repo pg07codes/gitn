@@ -93,7 +93,7 @@ program
       console.log(chalk.green(`On branch ${chalk.bold.blue(CURRENT_BRANCH)}`));
       notes = data.split("\n");
       notes.pop();
-      if(notes.length===0){
+      if (notes.length === 0) {
         console.log(chalk.red('no notes found'));
         return;
       }
@@ -172,6 +172,7 @@ program
         if (!branch) throw new Error(" option '-d --delete' requires <branch> to be specified");
         if (CURRENT_BRANCH == branch) throw new Error("On same branch. Switch to another branch.");
         await fs.unlink(`${NOTE_DIR}${branch}.txt`);
+        console.log(chalk.green(`branch ${chalk.bold.blue(branch)} deleted`))
       } catch (e) {
         if (e.errno === -2) {
           console.log(chalk.red(`branch '${chalk.bold(branch)}' does not exist.`));
@@ -351,6 +352,10 @@ program
       console.log(chalk.green(`On branch ${chalk.bold.blue(CURRENT_BRANCH)}`));
       notes = data.split('\n');
       notes.pop();
+      if (notes.length === 0) {
+        console.log(chalk.red('no notes found'));
+        return;
+      }
       let choices = [];
       choices = notes.map(i => { return { name: i } });
       let resp = await inquirer
