@@ -1,7 +1,7 @@
 {
   "name": "gitn",
-  "version": "0.1.0",
-  "description": "gitn is an cmdline app for notes (git + notes)",
+  "version": "0.1.1",
+  "description": "a super simple cross-platform command line note taking application that makes life much more easier",
   "main": "index.js",
   "preferGlobal": true,
   "bin": {
@@ -20,7 +20,8 @@
     "command line",
     "note taking",
     "gitn",
-    "cmdline notes"
+    "cmdline notes",
+    "notes manager"
   ],
   "author": "Pranav Gupta <pg07codes@gmail.com> (pg07codes.github.io)",
   "license": "MIT",

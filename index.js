@@ -14,7 +14,7 @@ let NOTE_DIR = cfg.get('NOTE_DIR');
 let CURRENT_BRANCH = cfg.get('CURRENT_BRANCH');
 let CONFIG = cfg.all;
 
-program.version('0.1.0');
+program.version('0.1.1');
 
 program
   .command('config')
